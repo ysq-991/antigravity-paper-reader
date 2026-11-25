@@ -1,3 +1,5 @@
+**中文** | [English](README_EN.md)
+
 # Paper Reader for Antigravity
 
 一个专为 **Google Antigravity** 打造的开源 **MCP App 插件**，旨在**优化用户在 Antigravity 中阅读论文的体验**：在右侧扩展栏中获得类似 Zotero 的 PDF 论文阅读体验，支持本地文件夹读取、划词高亮与笔记、**零 AI 额度消耗的悬浮“翻译钉子”**，以及一键向 AI 提问或引用原文。
