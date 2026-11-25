@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Paper Reader</title>
+  <!-- INLINE_CSS -->
+</head>
+<body>
+  <div id="app">
+    <!-- Top Header -->
+    <header class="topbar">
+      <div class="topbar-row">
+        <button id="btn-pick-folder" class="btn btn-primary" title="选择本地论文文件夹">📁 选择文件夹</button>
+        <button id="btn-toggle-path" class="btn btn-icon" title="手动输入或选择最近文件夹">▾</button>
+        <button id="btn-toggle-library" class="btn" title="展开/收起文献列表">📚 文献 (<span id="paper-count">0</span>)</button>
+        <button id="btn-toggle-notes" class="btn" title="展开/收起高亮与笔记">📝 笔记 (<span id="note-count">0</span>)</button>
+      </div>
+      <div id="path-bar" class="path-bar hidden">
+        <input id="input-folder-path" type="text" placeholder="输入或粘贴论文文件夹路径，如 D:\Papers" />
+        <button id="btn-load-path" class="btn btn-primary">加载</button>
+        <select id="select-recent-folders" title="最近打开的文件夹">
+          <option value="">最近文件夹...</option>
+        </select>
+      </div>
+      <div class="active-paper-bar">
+        <span id="active-folder-label" class="muted" title="">未选择文件夹</span>
+        <span class="sep">·</span>
+        <span id="active-file-label" class="filename" title="">未打开论文</span>
+      </div>
+    </header>
+
+    <!-- Reader Toolbar -->
+    <div id="reader-toolbar" class="toolbar hidden">
+      <div class="toolbar-group">
+        <button id="btn-prev-page" class="btn btn-icon" title="上一页">◀</button>
+        <input id="input-page" type="number" min="1" value="1" />
+        <span class="muted">/ <span id="total-pages">0</span></span>
+        <button id="btn-next-page" class="btn btn-icon" title="下一页">▶</button>
+      </div>
+      <div class="toolbar-group">
+        <button id="btn-zoom-out" class="btn btn-icon" title="缩小">－</button>
+        <span id="zoom-label" class="zoom-label">100%</span>
+        <button id="btn-zoom-in" class="btn btn-icon" title="放大">＋</button>
+        <button id="btn-fit-width" class="btn" title="适应宽度">适宽</button>
+      </div>
+      <div class="toolbar-group">
+        <button id="btn-translate-page" class="btn btn-accent" title="将当前页翻译成中文">🌐 翻译当前页</button>
+        <button id="btn-ask-current-page" class="btn btn-accent" title="让 AI 讲解当前页">✨ 问当前页</button>
+      </div>
+    </div>
+
+    <!-- Main Workspace -->
+    <div class="workspace">
+      <!-- Library Drawer -->
+      <aside id="library-drawer" class="drawer hidden">
+        <div class="drawer-header">
+          <input id="input-search-papers" type="text" placeholder="搜索论文文件名..." />
+        </div>
+        <div id="paper-list" class="drawer-list"></div>
+      </aside>
+
+      <!-- PDF Canvas Area -->
+      <main id="viewer-container" class="viewer-container">
+        <div id="empty-state" class="empty-state">
+          <div class="empty-icon">📖</div>
+          <h3>欢迎使用 Paper Reader</h3>
+          <p>点击上方 <strong>📁 选择文件夹</strong>，选取存放 PDF 论文的文件夹即可开始阅读。</p>
+          <p class="muted">阅读时划词可高亮、记笔记，或一键将段落与公式发给 AI 解答。</p>
+        </div>
+        <div id="loading-state" class="loading-state hidden">
+          <div class="spinner"></div>
+          <p id="loading-text">正在加载论文...</p>
+        </div>
+        <div id="pages-wrapper" class="pages-wrapper"></div>
+      </main>
+
+      <!-- Notes & Highlights Drawer -->
+      <aside id="notes-drawer" class="drawer drawer-right hidden">
+        <div class="drawer-header">
+          <strong>高亮与笔记</strong>
+          <button id="btn-send-all-notes" class="btn btn-sm" title="将所有笔记发给 AI 总结">总结笔记</button>
+        </div>
+        <div id="notes-list" class="drawer-list"></div>
+      </aside>
+    </div>
+
+    <!-- Floating Selection Popover -->
+    <div id="selection-popover" class="popover hidden">
+      <div class="popover-colors">
+        <button class="color-dot" data-color="#fde047" style="background:#fde047" title="黄色高亮"></button>
+        <button class="color-dot" data-color="#86efac" style="background:#86efac" title="绿色高亮"></button>
+        <button class="color-dot" data-color="#93c5fd" style="background:#93c5fd" title="蓝色高亮"></button>
+        <button class="color-dot" data-color="#f9a8d4" style="background:#f9a8d4" title="粉色高亮"></button>
+      </div>
+      <div class="popover-divider"></div>
+      <button id="btn-pop-translate" class="btn btn-sm btn-accent">🌐 翻译</button>
+      <button id="btn-pop-ask" class="btn btn-sm btn-accent">💬 问 AI</button>
+      <button id="btn-pop-attach" class="btn btn-sm">📎 引用到对话</button>
+    </div>
+
+    <!-- Folder Browser Modal -->
+    <div id="folder-modal" class="modal hidden">
+      <div class="modal-card folder-modal-card">
+        <div class="modal-header">
+          <strong>📁 选择论文文件夹</strong>
+          <button id="btn-close-folder" class="btn btn-icon">✕</button>
+        </div>
+        <div id="folder-shortcuts" class="folder-shortcuts"></div>
+        <div class="folder-nav-bar">
+          <button id="btn-folder-up" class="btn" title="上一级目录">⬆ 上一级</button>
+          <input id="input-browse-path" type="text" placeholder="输入路径并按回车..." />
+          <button id="btn-browse-go" class="btn">跳转</button>
+        </div>
+        <div id="folder-subdirs" class="folder-subdirs"></div>
+        <div class="modal-actions folder-modal-footer">
+          <span id="folder-pdf-hint" class="muted"></span>
+          <div class="toolbar-group">
+            <button id="btn-cancel-folder" class="btn">取消</button>
+            <button id="btn-confirm-folder" class="btn btn-primary">选择此文件夹</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Non-blocking Translation Pins Layer -->
+    <div id="pins-layer" class="pins-layer"></div>
+
+    <!-- Ask AI Modal -->
+    <div id="ask-modal" class="modal hidden">
+      <div class="modal-card">
+        <div class="modal-header">
+          <strong>向 AI 提问</strong>
+          <button id="btn-close-ask" class="btn btn-icon">✕</button>
+        </div>
+        <blockquote id="ask-quote" class="ask-quote"></blockquote>
+        <textarea id="ask-input" rows="3" placeholder="输入你的问题（例如：解释这段公式的含义 / 总结这段结论）..."></textarea>
+        <div class="modal-actions">
+          <button id="btn-cancel-ask" class="btn">取消</button>
+          <button id="btn-submit-ask" class="btn btn-primary">发送到对话</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="toast" class="toast hidden"></div>
+  </div>
+  <!-- INLINE_JS -->
+</body>
+</html>

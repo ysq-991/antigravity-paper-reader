@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "paper-reader": {
+      "command": "node",
+      "args": [
+        "${PLUGIN_ROOT}/server.mjs",
+        "--data-dir",
+        "${PLUGIN_DATA}"
+      ]
+    }
+  }
+}
